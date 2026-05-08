@@ -1,0 +1,140 @@
+----------kubectl Installation-----------
+curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+
+chmod +x ./kubectl  ##-----Make the kubectl binary executable
+
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+=============================================================
+
+----------- eksctl  Installation ------------------------ 
+   a. Download and extract the latest release   
+   b. Move the extracted binary to /usr/local/bin   
+   c. Test that your eksclt installation was successful   
+   ```sh
+   curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+   sudo mv /tmp/eksctl /usr/local/bin
+   eksctl version
+
+
+# EKS cluster Setup Process 
+
+  # Create an IAM Role and attache it to EC2 instance    
+   `Note: create IAM user with programmatic access if your bootstrap system is outside of AWS`   
+   IAM user should have access to   
+   IAM   
+   EC2   
+   VPC    
+   CloudFormation
+
+  # Create your cluster and nodes 
+   ```sh
+   eksctl create cluster --name cluster-name  \
+   --region region-name \
+   --node-type instance-type \
+   --nodes-min 2 \
+   --nodes-max 2 \ 
+   --zones <AZ-1>,<AZ-2>
+   
+   example:
+   eksctl create cluster --name test \
+      --region us-east-1 \
+   --node-type t2.small \
+
+# after create cluster to update it
+ aws eks update-kubeconfig --region <region> --name <cluster name>
+
+ ex: aws eks update-kubeconfig --region ap-south-1 --name naresh
+
+ # To delete the EKS clsuter 
+    
+   eksctl delete cluster naresh --region ap-south-1
+   
+   
+
+
+
+
+
+
+
+
+
+
+
+--------------------------Kubernetes workloads----------------------------------------------
+Imperative:
+
+kubectl run pod --image nginx
+------------------------- pods ---------------------------------------------------------------
+
+kubect apply -f pod <.yaml>
+
+kubectl get pods
+
+kubectl get pods -o wide    # to see the 
+
+kubectl delete pod <pod name>
+
+kubectl describe pods <name of the pod>  # to know more details about pod 
+
+kubectl exec <pod-name>  -it -- /bin/sh 
+
+
+---Pod.yaml---
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp
+  labels:
+      app: webapp
+      type: front-end
+spec:
+  containers:
+  - name: nginx-container 
+    image: nginx
+
+
+--------------------------------------------------------------
+
+KUBERNETES ----CRI 
+
+====================================================================***
+
+CRI (Container Runtime Interface) is an API layer that allows Kubernetes to talk to container runtimes.
+It defines how the kubelet communicates with the container runtime to start, stop, and manage containers.
+
+*******Note: since Kubernetes no longer uses Docker directly (after v1.24), the docker ps command won’t work unless you’re explicitly using Docker (cri-dockerd) as your container runtime.
+
+Let’s go through how to check running containers inside a Kubernetes node, depending on which runtime
+
+VERSION="v1.30.0"
+curl -LO https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/crictl-$VERSION-linux-amd64.tar.gz
+sudo tar zxvf crictl-$VERSION-linux-amd64.tar.gz -C /usr/local/bin
+
+
+sudo crictl ps   #to check only container details 
+
+kubectl get pods # to check pod details 
+
+
+
+---
+Ex: below 1.24 version kuberntes 
+Kubernetes (kubelet)
+     ↓
+  dockershim (translator)
+     ↓
+  Docker Engine
+     ↓
+  containerd → runc
+
+# Below after 1.24 version 
+
+Kubernetes (kubelet)
+     ↓
+  CRI (native)
+     ↓
+  containerd / CRI-O / cri-dockerd
