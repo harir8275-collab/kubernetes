@@ -1,0 +1,23 @@
+# Create the namespace for argoCD
+
+ kubectl create namespace argocd 
+
+# Install ArgoCD using the below command 
+
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# After installing the ArgoCD, you can run the below command to check what resources it has created.
+
+  kubectl get all -n argocd 
+
+ #  Now in order to access the UI of ArgoCD, you need to run the below command
+
+    kubectl edit svc argocd-server -n argocd    # enable Node Port 
+
+#  You need to run the below command to get the value of the secret.
+
+   kubectl get secret argocd-initial-admin-secret -n argocd -o yaml
+
+ # The secret base64 encoded so, you have to decode the secret by running the below command.
+
+   echo "secret value" | base64 --decode 
